@@ -15,6 +15,7 @@ private Image specialImage;
 
     
     public Bykin(int startX, int startY) {
+        
         this.x = startX;
         this.y = startY;
         this.status = new Status(1, 10, 5, 3, 100); // 初期値を設定
@@ -27,7 +28,15 @@ private Image specialImage;
             e.printStackTrace();
         }
     }
+    // 画像の幅を取得
+    public int getWidth() {
+        return image.getWidth(null);  // 画像の幅を返す
+    }
 
+    // 画像の高さを取得
+    public int getHeight() {
+        return image.getHeight(null);  // 画像の高さを返す
+    }
     public void move(int dx, int dy) {
         x += dx * status.getSpeed();
         y += dy * status.getSpeed();
@@ -68,6 +77,10 @@ private Image specialImage;
     public Image getSpecialImage() {
         return specialImage;
     }
+    public BufferedImage getMaskImage() {
+        return image;
+    }
+    
     
 
     public int getX() { return x; }

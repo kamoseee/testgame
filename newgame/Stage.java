@@ -19,4 +19,12 @@ public class Stage {
             }
         }
     }
+    public int getStageWidth() {
+        return width;
+    }
+    
+    public int getStageHeight() {
+        return height;
+    }
+    
 }

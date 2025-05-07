@@ -1,13 +1,16 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseEvent;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.awt.geom.Ellipse2D;
-
-
-public class BykinGame extends JPanel implements KeyListener, ActionListener {
+import java.awt.image.BufferedImage;  
+import java.util.Iterator;
+public class BykinGame extends JPanel implements KeyListener, MouseMotionListener,ActionListener {
 
     private Bykin bykin;
     private Stage stage;
@@ -20,9 +23,14 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
     private int cooldownMax = 3000; // 3000ms = 3秒間クールダウン
     private long skillUsedTime = 0;
     private boolean isGameOver = false;
-    private Font gameOverFont = new Font("MS Gothic", Font.BOLD, 48);
+    //private Font gameOverFont = new Font("MS Gothic", Font.BOLD, 48);
     private boolean isGameStarted = false; // スタート画面制御
     private GameState gameState;
+    private List<Projectile> projectiles = new ArrayList<>();
+    private long lastAttackTime = 0; // 攻撃の最後の発射時間
+    private Point mousePos = new Point(0, 0);
+    private int mouseX = 0;
+    private int mouseY = 0;
 
 
     public BykinGame() {
@@ -31,6 +39,7 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
 
         bykin = new Bykin(100, 200);
         stage = new Stage(2000, 2000);
+        addMouseMotionListener(this);
 
         enemies = new ArrayList<>();
 
@@ -39,6 +48,25 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
         enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
         enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
         
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                /*
+                // プレイヤーの位置からマウス位置への角度を計算
+                double angle = Math.atan2(e.getY() - bykin.getY(), e.getX() - bykin.getX());
+                // 攻撃を発射
+                 // 発射位置をプレイヤーの位置に設定
+                 int startX = bykin.getX() + bykin.getWidth() / 2;
+                 int startY = bykin.getY() + bykin.getHeight() / 2;
+                 
+                 // デバッグ: 角度と発射位置を出力
+        System.out.println("Angle: " + angle);
+        System.out.println("Player Position: (" + startX + ", " + startY + ")");
+       
+                projectiles.add(new Projectile(bykin.getX(), bykin.getY(), angle, "assets/attack.png"));
+             */
+                }
+        });
         setPreferredSize(new Dimension(1280, 720));
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -49,7 +77,17 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
 
         gameState = GameState.START; // 初期状態をスタート画面に設定
     }
+    @Override
+public void mouseMoved(MouseEvent e) {
+    mousePos = e.getPoint();
+    mouseX = e.getX();
+    mouseY = e.getY();
+}
 
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        // マウスがドラッグされた時の処理を書く（今回は何もしない）
+    }
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -63,7 +101,11 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
         for (Enemy enemy : enemies) {
             enemy.draw(g, offsetX, offsetY);
         }
-    
+        // 攻撃を描画
+        for (Projectile projectile : projectiles) {
+            projectile.move();  // 攻撃を動かす
+            projectile.draw(g, offsetX, offsetY);
+        }
         drawHealthBar(g, 10, 10);
         drawCoordinates(g);
         drawSkillIcons(g);
@@ -84,12 +126,6 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
                 break;
         }
     }
-    /*private void drawGame(Graphics g) {
-        // 例: ゲーム中に描画したい要素を追加
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.drawString("ゲーム進行中...", 10, 30);  // 任意のメッセージ
-    }*/
     private void drawStatusPanel(Graphics g) {
         int panelX = getWidth() - 220;
         g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
@@ -103,9 +139,8 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
     
         // ステータステキスト
         g.setColor(Color.WHITE);
-        Font japaneseFont = new Font("MS Gothic", Font.PLAIN, 16);
-    
         Status s = bykin.getStatus();
+    
         g.drawString("レベル: " + s.getLevel(), panelX + 10, panelY + 30);
         g.drawString("攻撃: " + s.getAttack(), panelX + 10, panelY + 50);
         g.drawString("防御: " + s.getDefense(), panelX + 10, panelY + 70);
@@ -159,10 +194,6 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
             g2.dispose();
         }
     }
-    
-        
-    
-    
     private void drawCoordinates(Graphics g) {
         g.setColor(Color.BLACK);
         g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
@@ -178,15 +209,10 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
         skillOnCooldown = true;
         skillUsedTime = System.currentTimeMillis();
     }
-    
-    
     private void useSpecial() {
         System.out.println("必殺技発動！");
         // 強力な技の処理をここに追加
     }
-    
-
-
     private void drawHealthBar(Graphics g, int x, int y) {
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 16));
@@ -204,43 +230,103 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
         g.setColor(Color.BLACK);
         g.drawString(currentHp + "/" + maxHp, x + 260, y + 15);
         }
-
-        @Override
+@Override
 public void actionPerformed(ActionEvent e) {
-    if (!showStatus) {
-        bykin.move(dx, dy);
-      // 敵をランダムに移動させる
-      for (Enemy enemy : enemies) {
-        // 当たり判定
-    Rectangle bykinRect = new Rectangle(bykin.getX(), bykin.getY(), 64, 64);
-    Rectangle enemyRect = new Rectangle(enemy.getX(), enemy.getY(), 64, 64);
+    projectiles.removeIf(p ->
+    p.getX() < 0 ||
+    p.getY() < 0 ||
+    p.getX() > stage.getStageWidth() ||
+    p.getY() > stage.getStageHeight()
+);
 
-    if (bykinRect.intersects(enemyRect)) {
-        // ダメージを受ける（1秒に1回まで）
-        if (!bykin.isInvincible()) {
-            bykin.takeDamage(enemy.getAttack());
-            bykin.setInvincible(true);
-            if (bykin.getStatus().getCurrentHp() <= 0) {
-                isGameOver = true;
+            if (!showStatus && !isGameOver) {  // ゲームオーバー時は処理しない
+                bykin.move(dx, dy);
+                
+                for (Enemy enemy : enemies) {
+                    enemy.move(getWidth(), getHeight());
+        
+                    // ピクセル単位の当たり判定
+                    BufferedImage bykinImg = bykin.getMaskImage();
+                    BufferedImage enemyImg = enemy.getMaskImage();
+        
+                    if (isPixelCollision(bykinImg, bykin.getX(), bykin.getY(),
+                                         enemyImg, enemy.getX(), enemy.getY())) {
+                        if (!bykin.isInvincible()) {
+                            bykin.takeDamage(enemy.getAttack());
+                            bykin.setInvincible(true);
+        
+                            if (bykin.getStatus().getCurrentHp() <= 0) {
+                                isGameOver = true;
+                                gameState = GameState.GAME_OVER;  // ゲームオーバー状態に変更
+                            }
+                        }
+                    }
+                }
+                for (Iterator<Projectile> it = projectiles.iterator(); it.hasNext(); ) {
+                    Projectile projectile = it.next();
+                    for (Enemy enemy : enemies) {
+                        if (projectile.getBounds().intersects(
+                            new Rectangle(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight())
+                        )) {
+                            enemy.takeDamage(bykin.getStatus().getAttack());
+                            it.remove();  // イテレータを使って削除
+                            break;
+                        }
+                    }
+                }
+    
+            
+                // 攻撃を自動で発射
+                if (System.currentTimeMillis() - lastAttackTime >= 2000) {  // 2秒ごとに攻撃
+                    int centerX = bykin.getX() + bykin.getWidth() / 2;
+                    int centerY = bykin.getY() + bykin.getHeight() / 2;
+
+                    int offsetX = bykin.getX() - charX;
+                    int offsetY = bykin.getY() - charY;
+
+                    // マウスの画面上の座標を、ステージ上の座標に変換
+                    int worldMouseX = mouseX + offsetX;
+                    int worldMouseY = mouseY + offsetY;
+                    double angle = Math.atan2(worldMouseY - centerY, worldMouseX - centerX);
+                
+                    projectiles.add(new Projectile(centerX, centerY, angle, "assets/attack.png"));
+                    lastAttackTime = System.currentTimeMillis();
+                }
+                
+                }
+            repaint();
+        }
+private void restartGame() {
+            bykin = new Bykin(100, 200);
+            enemies.clear();
+            enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
+            enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
+            enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
+            isGameOver = false;
+            skillOnCooldown = false;
+            dx = 0;
+            dy = 0;
+            gameState = GameState.START;  // ゲームオーバー後はスタート画面に戻す
+            repaint();
+        }
+        // ピクセル単位のマスク判定（画像の重なりをチェック）
+private boolean isPixelCollision(BufferedImage img1, int x1, int y1,
+                                  BufferedImage img2, int x2, int y2) {
+    int top = Math.max(y1, y2);
+    int bottom = Math.min(y1 + img1.getHeight(), y2 + img2.getHeight());
+    int left = Math.max(x1, x2);
+    int right = Math.min(x1 + img1.getWidth(), x2 + img2.getWidth());
+
+    for (int y = top; y < bottom; y++) {
+        for (int x = left; x < right; x++) {
+            int pixel1 = img1.getRGB(x - x1, y - y1);
+            int pixel2 = img2.getRGB(x - x2, y - y2);
+            if (((pixel1 >> 24) & 0xFF) > 0 && ((pixel2 >> 24) & 0xFF) > 0) {
+                return true; // 両方の画像が不透明 → 衝突
             }
         }
     }
-        enemy.move(getWidth(), getHeight()); // 画面サイズを渡す
-    }
-    }
-    repaint();
-}
-private void restartGame() {
-    bykin = new Bykin(100, 200);
-    enemies.clear();
-    enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
-    enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
-    enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
-    isGameOver = false;
-    skillOnCooldown = false;
-    dx = 0;
-    dy = 0;
-    repaint();
+    return false;
 }
 @Override
 public void keyPressed(KeyEvent e) {
@@ -264,16 +350,16 @@ public void keyPressed(KeyEvent e) {
             repaint();
         }
         case KeyEvent.VK_SPACE -> {
-            if (!isGameStarted) {
+            if (isGameOver) {
+                restartGame();
+                gameState = GameState.START;  // ゲームオーバー後にスタート画面に戻す
+            } else if (!isGameStarted) {
                 gameState = GameState.GAME;
                 repaint();
-            } else if (isGameOver) {
-                restartGame();
             }
         }
     }
-    }
-    
+}
 @Override
 public void keyReleased(KeyEvent e) {
     if (showStatus) return;
@@ -283,11 +369,8 @@ public void keyReleased(KeyEvent e) {
         case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0;
     }
 }
-
-
-    @Override
-    public void keyTyped(KeyEvent e) {}
-
+@Override
+public void keyTyped(KeyEvent e) {}
     public static void main(String[] args) {
         JFrame frame = new JFrame("Bykin Scroll Demo");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

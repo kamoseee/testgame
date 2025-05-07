@@ -4,11 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import java.util.Random;
+import java.awt.image.BufferedImage;  // これを追加
+
 
 public class Enemy {
     private int x, y;
-    private Image image;
-
+    private BufferedImage image; 
     // 敵のステータス
     // 宣言だけ残す（初期化はコンストラクタで行うため）
 private int level;
@@ -68,6 +69,10 @@ private int currentHp;
     public int getCurrentHp() {
         return currentHp;
     }
+    public BufferedImage getImage() {
+        return image;
+    }
+    
 
     // 敵のHPを減らす処理
     public void takeDamage(int damage) {
@@ -119,4 +124,19 @@ private int currentHp;
     public int getY() {
         return y;
     }
+    public BufferedImage getMaskImage() {
+        return (BufferedImage) image;
+    }
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, image.getWidth(null), image.getHeight(null));
+    }
+    public int getWidth() {
+        return image.getWidth();
+    }
+    
+    public int getHeight() {
+        return image.getHeight();
+    }
+    
+    
 }
