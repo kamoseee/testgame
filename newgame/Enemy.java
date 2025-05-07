@@ -10,12 +10,14 @@ public class Enemy {
     private Image image;
 
     // 敵のステータス
-    private int level = 1;
-    private int attack = 5;
-    private int defense = 1;
-    private int speed = 3; // 速度
-    private int maxHp = 30;
-    private int currentHp = 30;
+    // 宣言だけ残す（初期化はコンストラクタで行うため）
+private int level;
+private int attack;
+private int defense;
+private int speed;
+private int maxHp;
+private int currentHp;
+
 
     private Random rand = new Random();
     
@@ -24,19 +26,24 @@ public class Enemy {
     // 移動間隔（ミリ秒）
     private static final long MOVE_INTERVAL = 500; // 0.5秒
 
-    public Enemy(int x, int y) {
+    public Enemy(int x, int y, String imagePath, int level, int attack, int defense, int speed, int maxHp) {
         this.x = x;
         this.y = y;
-        this.lastMoveTime = System.currentTimeMillis(); // 初期化
-
+        this.level = level;
+        this.attack = attack;
+        this.defense = defense;
+        this.speed = speed;
+        this.maxHp = maxHp;
+        this.currentHp = maxHp;
+        this.lastMoveTime = System.currentTimeMillis();
+    
         try {
-            // 画像を読み込む
-            image = ImageIO.read(new File("assets/virus01.png"));
+            image = ImageIO.read(new File(imagePath));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+    
     // 敵のステータスに関連するゲッター
     public int getLevel() {
         return level;

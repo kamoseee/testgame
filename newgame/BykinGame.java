@@ -17,8 +17,13 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
     private List<Enemy> enemies; // 敵のリスト
     private boolean showStatus = false; // ステータス表示フラグ
     private boolean skillOnCooldown = false;
-private int cooldownMax = 3000; // 3000ms = 3秒間クールダウン
-private long skillUsedTime = 0;
+    private int cooldownMax = 3000; // 3000ms = 3秒間クールダウン
+    private long skillUsedTime = 0;
+    private boolean isGameOver = false;
+    private Font gameOverFont = new Font("MS Gothic", Font.BOLD, 48);
+    private boolean isGameStarted = false; // スタート画面制御
+
+
 
     public BykinGame() {
         // Tabキーのフォーカス移動を無効化（Tabキーイベントを受け取れるようにする）
@@ -27,10 +32,13 @@ private long skillUsedTime = 0;
         bykin = new Bykin(100, 200);
         stage = new Stage(2000, 2000);
 
-        // 敵を1体だけ配置 (固定位置: 500, 300)
         enemies = new ArrayList<>();
-        enemies.add(new Enemy(500, 300)); // 固定位置に1体の敵を配置
 
+        // 画像, 位置, ステータス（レベル, 攻撃, 防御, 速度, HP）
+        enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
+        enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
+        enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
+        
         setPreferredSize(new Dimension(1280, 720));
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -62,8 +70,29 @@ private long skillUsedTime = 0;
         if (showStatus) {
             drawStatusPanel(g);
         }
+        if (!isGameStarted) {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, getWidth(), getHeight());
+            g.setColor(Color.WHITE);
+            g.setFont(gameOverFont);
+            g.drawString("バイキン強化計画", getWidth() / 2 - 180, getHeight() / 2 - 50);
+            g.setFont(new Font("MS Gothic", Font.PLAIN, 24));
+            g.drawString("スペースキーでスタート", getWidth() / 2 - 130, getHeight() / 2 + 30);
+            return;
+        }
+        if (isGameOver) {
+            g.setColor(new Color(0, 0, 0, 180));
+            g.fillRect(0, 0, getWidth(), getHeight());
+        
+            g.setColor(Color.RED);
+            g.setFont(gameOverFont);
+            g.drawString("ゲームオーバー", getWidth() / 2 - 150, getHeight() / 2);
+            g.setFont(new Font("MS Gothic", Font.PLAIN, 24));
+            g.setColor(Color.WHITE);
+            g.drawString("スペースキーでリスタート", getWidth() / 2 - 130, getHeight() / 2 + 40);
+            return;
+        }
     }
-    
     private void drawStatusPanel(Graphics g) {
         int panelX = getWidth() - 220;
         g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
@@ -185,12 +214,37 @@ public void actionPerformed(ActionEvent e) {
         bykin.move(dx, dy);
       // 敵をランダムに移動させる
       for (Enemy enemy : enemies) {
+        // 当たり判定
+    Rectangle bykinRect = new Rectangle(bykin.getX(), bykin.getY(), 64, 64);
+    Rectangle enemyRect = new Rectangle(enemy.getX(), enemy.getY(), 64, 64);
+
+    if (bykinRect.intersects(enemyRect)) {
+        // ダメージを受ける（1秒に1回まで）
+        if (!bykin.isInvincible()) {
+            bykin.takeDamage(enemy.getAttack());
+            bykin.setInvincible(true);
+            if (bykin.getStatus().getCurrentHp() <= 0) {
+                isGameOver = true;
+            }
+        }
+    }
         enemy.move(getWidth(), getHeight()); // 画面サイズを渡す
     }
     }
     repaint();
 }
-
+private void restartGame() {
+    bykin = new Bykin(100, 200);
+    enemies.clear();
+    enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
+    enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
+    enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
+    isGameOver = false;
+    skillOnCooldown = false;
+    dx = 0;
+    dy = 0;
+    repaint();
+}
 @Override
 public void keyPressed(KeyEvent e) {
     if (showStatus) {
@@ -212,9 +266,17 @@ public void keyPressed(KeyEvent e) {
             showStatus = true;
             repaint();
         }
+        case KeyEvent.VK_SPACE -> {
+            if (!isGameStarted) {
+                isGameStarted = true;
+                repaint();
+            } else if (isGameOver) {
+                restartGame();
+            }
+        }
     }
-}
-
+    }
+    
 @Override
 public void keyReleased(KeyEvent e) {
     if (showStatus) return;

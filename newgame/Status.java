@@ -31,4 +31,8 @@ public class Status {
         currentHp += amount;
         if (currentHp > maxHp) currentHp = maxHp;
     }
+    public void setCurrentHp(int hp) {
+        currentHp = Math.max(0, Math.min(hp, maxHp)); // 0〜maxHpの範囲に収める
+    }
+    
 }

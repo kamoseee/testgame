@@ -7,6 +7,9 @@ public class Bykin {
     private int x, y;
     private Status status;
     private Image skillImage;
+    private boolean invincible = false;
+private long lastDamageTime = 0;
+private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
 private Image specialImage;
        
 
@@ -29,10 +32,23 @@ private Image specialImage;
         x += dx * status.getSpeed();
         y += dy * status.getSpeed();
     }
+    public boolean isInvincible() {
+        long now = System.currentTimeMillis();
+        if (invincible && now - lastDamageTime >= INVINCIBLE_TIME) {
+            invincible = false;
+        }
+        return invincible;
+    }
     
+    public void setInvincible(boolean b) {
+        invincible = b;
+        lastDamageTime = System.currentTimeMillis();
+    }
 
     public void takeDamage(int damage) {
-        status.takeDamage(damage);
+        int reduced = Math.max(1, damage - status.getDefense()); // 最低1ダメージ
+        status.setCurrentHp(status.getCurrentHp() - reduced);
+        System.out.println("ダメージを受けた！ 残HP: " + status.getCurrentHp());
     }
 
     public void heal(int amount) {
