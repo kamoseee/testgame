@@ -2,20 +2,19 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import javax.imageio.ImageIO;
+
 public class Bykin {
     private BufferedImage image;
     private int x, y;
     private Status status;
     private Image skillImage;
     private boolean invincible = false;
-private long lastDamageTime = 0;
-private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
-private Image specialImage;
-       
+    private long lastDamageTime = 0;
+    private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
+    private Image specialImage;
 
-    
     public Bykin(int startX, int startY) {
-        
+
         this.x = startX;
         this.y = startY;
         this.status = new Status(1, 10, 5, 3, 100); // 初期値を設定
@@ -23,24 +22,27 @@ private Image specialImage;
         try {
             image = ImageIO.read(new File("assets/bykin.png"));
             skillImage = ImageIO.read(new File("assets/E.png"));
-        specialImage = ImageIO.read(new File("assets/Q.png"));
+            specialImage = ImageIO.read(new File("assets/Q.png"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     // 画像の幅を取得
     public int getWidth() {
-        return image.getWidth(null);  // 画像の幅を返す
+        return image.getWidth(null); // 画像の幅を返す
     }
 
     // 画像の高さを取得
     public int getHeight() {
-        return image.getHeight(null);  // 画像の高さを返す
+        return image.getHeight(null); // 画像の高さを返す
     }
+
     public void move(int dx, int dy) {
         x += dx * status.getSpeed();
         y += dy * status.getSpeed();
     }
+
     public boolean isInvincible() {
         long now = System.currentTimeMillis();
         if (invincible && now - lastDamageTime >= INVINCIBLE_TIME) {
@@ -48,7 +50,7 @@ private Image specialImage;
         }
         return invincible;
     }
-    
+
     public void setInvincible(boolean b) {
         invincible = b;
         lastDamageTime = System.currentTimeMillis();
@@ -68,22 +70,30 @@ private Image specialImage;
         if (image != null) {
             g.drawImage(image, screenX, screenY, null);
         }
-        
+
     }
+
     public Image getSkillImage() {
         return skillImage;
     }
-    
+
     public Image getSpecialImage() {
         return specialImage;
     }
+
     public BufferedImage getMaskImage() {
         return image;
     }
-    
-    
 
-    public int getX() { return x; }
-    public int getY() { return y; }
-    public Status getStatus() { return status; }
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
 }

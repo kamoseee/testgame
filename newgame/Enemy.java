@@ -11,17 +11,21 @@ public class Enemy {
     private int x, y;
     private BufferedImage image; 
     // 敵のステータス
-    // 宣言だけ残す（初期化はコンストラクタで行うため）
-private int level;
-private int attack;
-private int defense;
-private int speed;
-private int maxHp;
-private int currentHp;
+        // 宣言だけ残す（初期化は
+        private int level;
+        private int attack;
+        private int defense;  
+        private int speed;
+        private int maxHp;
+        private int currentHp;  // ← これを追加！
+
+        private boolean dying = false; 
+        private Random rand = new Random(); 
 
 
-    private Random rand = new Random();
-    
+
+    private float alpha = 1.0f; // 1.0 
+
     // 敵が最後に移動した時間
     private long lastMoveTime;
     // 移動間隔（ミリ秒）
@@ -37,14 +41,14 @@ private int currentHp;
         this.maxHp = maxHp;
         this.currentHp = maxHp;
         this.lastMoveTime = System.currentTimeMillis();
-    
+
         try {
             image = ImageIO.read(new File(imagePath));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    
+
     // 敵のステータスに関連するゲッター
     public int getLevel() {
         return level;
@@ -82,7 +86,7 @@ private int currentHp;
         }
     }
 
-    // ランダムに移動するメソッド（間隔を調整）
+        //ランダムに移動するメソッド（間隔を調整）
     public void move(int screenWidth, int screenHeight) {
         long currentTime = System.currentTimeMillis();
         
@@ -93,12 +97,15 @@ private int currentHp;
 
             switch (direction) {
                 case 0: // 左
+                        
                     if (x - moveDistance >= 0) x -= moveDistance;
                     break;
                 case 1: // 右
+                        
                     if (x + moveDistance < screenWidth) x += moveDistance;
                     break;
                 case 2: // 上
+                        
                     if (y - moveDistance >= 0) y -= moveDistance;
                     break;
                 case 3: // 下
@@ -112,9 +119,36 @@ private int currentHp;
     }
 
     public void draw(Graphics g, int offsetX, int offsetY) {
-        // 敵の位置をオフセットを考慮して描画
-        g.drawImage(image, x - offsetX, y - offsetY, null);
+        Graphics2D g2d = (Graphics2D) g;
+    Composite original = g2d.getComposite();
+
+    if (dying) {
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     }
+
+    g2d.drawImage(image, x - offsetX, y - offsetY, null);
+
+    if (dying) {
+        g2d.setComposite(original);
+    }
+    }
+    public void startDying() {
+        this.dying = true;
+    }
+    public boolean isDying() {
+        return dying;
+    }
+    
+    public boolean updateDying() {
+        if (dying) {
+            alpha -= 0.05f; // 徐々に透明に
+            if (alpha <= 0) {
+                return true; // 消滅完了のサイン
+            }
+        }
+        return false;
+    }
+    
 
     // 位置を取得するゲッター
     public int getX() {

@@ -30,7 +30,6 @@ public class StatusPanel extends JPanel {
         g.setColor(Color.WHITE);
         g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
 
-
         Status s = bykin.getStatus();
         g.drawString("レベル: " + s.getLevel(), panelX + 10, panelY + 30);
         g.drawString("攻撃: " + s.getAttack(), panelX + 10, panelY + 50);
