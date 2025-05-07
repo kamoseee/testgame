@@ -22,7 +22,7 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
     private boolean isGameOver = false;
     private Font gameOverFont = new Font("MS Gothic", Font.BOLD, 48);
     private boolean isGameStarted = false; // スタート画面制御
-
+    private GameState gameState;
 
 
     public BykinGame() {
@@ -46,6 +46,8 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
 
         timer = new Timer(16, this); // 約60FPS
         timer.start();
+
+        gameState = GameState.START; // 初期状態をスタート画面に設定
     }
 
     @Override
@@ -70,29 +72,24 @@ public class BykinGame extends JPanel implements KeyListener, ActionListener {
         if (showStatus) {
             drawStatusPanel(g);
         }
-        if (!isGameStarted) {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getWidth(), getHeight());
-            g.setColor(Color.WHITE);
-            g.setFont(gameOverFont);
-            g.drawString("バイキン強化計画", getWidth() / 2 - 180, getHeight() / 2 - 50);
-            g.setFont(new Font("MS Gothic", Font.PLAIN, 24));
-            g.drawString("スペースキーでスタート", getWidth() / 2 - 130, getHeight() / 2 + 30);
-            return;
-        }
-        if (isGameOver) {
-            g.setColor(new Color(0, 0, 0, 180));
-            g.fillRect(0, 0, getWidth(), getHeight());
-        
-            g.setColor(Color.RED);
-            g.setFont(gameOverFont);
-            g.drawString("ゲームオーバー", getWidth() / 2 - 150, getHeight() / 2);
-            g.setFont(new Font("MS Gothic", Font.PLAIN, 24));
-            g.setColor(Color.WHITE);
-            g.drawString("スペースキーでリスタート", getWidth() / 2 - 130, getHeight() / 2 + 40);
-            return;
+        switch (gameState) {
+            case START:
+                new StartScreen().draw(g, getWidth(), getHeight());
+                break;
+            case GAME:
+                //drawGame(g);
+                break;
+            case GAME_OVER:
+                new GameOverScreen().draw(g, getWidth(), getHeight());
+                break;
         }
     }
+    /*private void drawGame(Graphics g) {
+        // 例: ゲーム中に描画したい要素を追加
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("ゲーム進行中...", 10, 30);  // 任意のメッセージ
+    }*/
     private void drawStatusPanel(Graphics g) {
         int panelX = getWidth() - 220;
         g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
@@ -268,7 +265,7 @@ public void keyPressed(KeyEvent e) {
         }
         case KeyEvent.VK_SPACE -> {
             if (!isGameStarted) {
-                isGameStarted = true;
+                gameState = GameState.GAME;
                 repaint();
             } else if (isGameOver) {
                 restartGame();
@@ -301,4 +298,9 @@ public void keyReleased(KeyEvent e) {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
+}
+enum GameState {
+    START,
+    GAME,
+    GAME_OVER
 }
