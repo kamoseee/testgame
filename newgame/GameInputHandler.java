@@ -15,7 +15,13 @@ public class GameInputHandler {
             handleSkillSelection(e.getKeyCode()); // スキル選択処理を追加
             return;
         }
-
+    
+        if (game.getGameState() == GameState.SHOW_STATS && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            game.setGameState(GameState.LEVEL_UP); // スペースキーでスキル選択画面へ移行
+            game.repaint();
+            return;
+        }
+    
         if (game.isShowStatus()) {
             if (e.getKeyCode() == KeyEvent.VK_TAB) {
                 game.setShowStatus(false);
@@ -23,7 +29,7 @@ public class GameInputHandler {
             }
             return;
         }
-
+    
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT -> game.setDx(-1);
             case KeyEvent.VK_RIGHT -> game.setDx(1);
@@ -51,7 +57,7 @@ public class GameInputHandler {
             }
         }
     }
-
+    
     private void handleSkillSelection(int keyCode) {
         switch (keyCode) {
             case KeyEvent.VK_1 -> game.getBykin().setSelectedSkill(SkillType.AREA_ATTACK);

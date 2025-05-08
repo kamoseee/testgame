@@ -77,8 +77,9 @@ public class Status {
     
         System.out.println("レベルアップ！ 新しいレベル: " + level);
     
-        // ゲームの状態をレベルアップ画面に変更
-        game.setGameState(GameState.LEVEL_UP);
+        game.setGameState(GameState.SHOW_STATS); // まずステータス変化画面を表示
+    game.repaint();
+
     }
 
     public void takeDamage(int damage) {

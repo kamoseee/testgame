@@ -58,11 +58,15 @@ public class GameLogic {
             for (Iterator<Projectile> projIt = game.getProjectiles().iterator(); projIt.hasNext();) {
                 Projectile projectile = projIt.next();
     
-                BufferedImage projectileImg = projectile.getMaskImage(); // 攻撃のマスク画像
-                BufferedImage enemyImg = enemy.getMaskImage(); // 敵のマスク画像
-    
-                if (checkPixelCollision(projectileImg, projectile.getX(), projectile.getY(),
-                                        enemyImg, enemy.getX(), enemy.getY())) {
+                if (checkPixelCollision(projectile.getImage(), projectile.getX(), projectile.getY(),
+                                        enemy.getImage(), enemy.getX(), enemy.getY())) {
+                                            // 貫通弾の場合、すでに当たった敵にはダメージを与えない
+                if (projectile instanceof SkillProjectile skillProjectile) {
+                    if (skillProjectile.hasHit(enemy)) {
+                        continue; // すでに当たった敵ならスキップ
+                    }
+                    skillProjectile.registerHit(enemy); // 初めて当たった敵を記録
+                }
                     int actualDamage = enemy.takeDamage(game.getBykin().getStatus().getAttack());
                     game.getDamageDisplays().add(new DamageDisplay(actualDamage, enemy.getX(), enemy.getY()));
     
@@ -71,14 +75,16 @@ public class GameLogic {
                         enemy.startDying();
                     }
     
-                    projIt.remove();
-                    break;
+                    if (!projectile.canPassThroughEnemies()) {
+                        projIt.remove(); // 通常の弾は削除
+                    }
                 }
             }
         }
     
         game.getEnemies().removeIf(enemy -> enemy.isDying() && enemy.updateDying());
     }
+    
     
 
     private void handleAutoAttack() {

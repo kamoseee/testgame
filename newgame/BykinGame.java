@@ -22,7 +22,6 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     private long skillUsedTime = 0;
     private boolean isGameOver = false;
     private boolean isGameStarted = false;
-    private GameState gameState;
     private List<Projectile> projectiles = new ArrayList<>();
     private long lastAttackTime = System.currentTimeMillis(); // 初期値を現在の時間
     private Point mousePos = new Point(0, 0);
@@ -33,7 +32,10 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     private GameRenderer renderer;
     private GameLogic logic;
     private GameInputHandler inputHandler;
+    private GameState gameState = GameState.START; // ゲームの状態を管理
 
+
+    
     public BykinGame() {
         setFocusTraversalKeysEnabled(false);
         inputHandler = new GameInputHandler(this);
@@ -61,6 +63,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         logic = new GameLogic(this);
         inputHandler = new GameInputHandler(this);
     }
+    
     public long getLastAttackTime() {
         return lastAttackTime;
     }
@@ -79,12 +82,62 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     public void setBykin(Bykin bykin) {
         this.bykin = bykin;
     }
+    private void drawStatsScreen(Graphics g) {
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(0, 0, getWidth(), getHeight());
+    
+        g.setColor(Color.YELLOW);
+        g.setFont(new Font("SansSerif", Font.BOLD, 48));
+        g.drawString("レベルアップ！", getWidth() / 2 - 150, getHeight() / 2 - 100);
+    
+        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
+        g.setColor(Color.WHITE);
+        Status s = bykin.getStatus();
+        g.drawString("新しいレベル: " + s.getLevel(), getWidth() / 2 - 100, getHeight() / 2 - 50);
+        g.drawString("攻撃力: " + s.getAttack(), getWidth() / 2 - 100, getHeight() / 2 - 20);
+        g.drawString("防御力: " + s.getDefense(), getWidth() / 2 - 100, getHeight() / 2 + 10);
+        g.drawString("速度: " + s.getSpeed(), getWidth() / 2 - 100, getHeight() / 2 + 40);
+        g.drawString("最大HP: " + s.getMaxHp(), getWidth() / 2 - 100, getHeight() / 2 + 70);
+        g.drawString("スペースキーで続行", getWidth() / 2 - 120, getHeight() / 2 + 120);
+    }
+    
+    private void drawLevelUpScreen(Graphics g) {
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(0, 0, getWidth(), getHeight());
+    
+        g.setColor(Color.YELLOW);
+        g.setFont(new Font("SansSerif", Font.BOLD, 48));
+        g.drawString("スキルを選択してください", getWidth() / 2 - 150, getHeight() / 2 - 100);
+    
+        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
+        g.setColor(Color.WHITE);
+        g.drawString("1: 範囲攻撃", getWidth() / 2 - 100, getHeight() / 2);
+        g.drawString("2: 貫通弾", getWidth() / 2 - 100, getHeight() / 2 + 30);
+        g.drawString("3: 連続攻撃", getWidth() / 2 - 100, getHeight() / 2 + 60);
+    }
+    
     
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        renderer.render(g); // 描画処理を `GameRenderer` に委譲
+        switch (getGameState()) { // `game.getGameState()` → `getGameState()`
+            case START:
+                new StartScreen().draw(g, getWidth(), getHeight()); // `game.getWidth()` → `getWidth()`
+                break;
+            case GAME:
+                renderer.render(g);
+                break;
+            case SHOW_STATS:
+                drawStatsScreen(g); // ステータス変化画面を表示
+                break;
+            case LEVEL_UP:
+                drawLevelUpScreen(g); // スキル選択画面を表示
+                break;
+            case GAME_OVER:
+                new GameOverScreen().draw(g, getWidth(), getHeight()); // `game.getWidth()` → `getWidth()`
+                break;
+        }
     }
 
     @Override
@@ -247,33 +300,37 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     private void usePiercingShot() {
         int centerX = bykin.getX() + bykin.getWidth() / 2;
         int centerY = bykin.getY() + bykin.getHeight() / 2;
-        double angle = Math.atan2(mouseY - centerY, mouseX - centerX);
-    
-        projectiles.add(new SkillProjectile(centerX, centerY, angle, "assets/skill_attack.png"));
-    }
+        // ワールド座標系でのマウス位置を取得
+    int offsetX = bykin.getX() - charX;
+    int offsetY = bykin.getY() - charY;
+    int worldMouseX = mouseX + offsetX;
+    int worldMouseY = mouseY + offsetY;
+        // 発射角度を計算
+    double angle = Math.atan2(worldMouseY - centerY, worldMouseX - centerX);
+
+    // 貫通弾を発射
+    projectiles.add(new SkillProjectile(centerX, centerY, angle, "assets/skill_attack.png"));
+}
     private void useRapidFire() {
-        new Thread(() -> {
-            long skillDuration = 5000;
-            long startTime = System.currentTimeMillis();
+        int centerX = bykin.getX() + bykin.getWidth() / 2;
+        int centerY = bykin.getY() + bykin.getHeight() / 2;
     
-            while (System.currentTimeMillis() - startTime < skillDuration) {
-                int centerX = bykin.getX() + bykin.getWidth() / 2;
-                int centerY = bykin.getY() + bykin.getHeight() / 2;
-                double angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+        int offsetX = bykin.getX() - charX;
+        int offsetY = bykin.getY() - charY;
     
-                projectiles.add(new Projectile(centerX, centerY, angle, "assets/attack.png"));
+        int worldMouseX = mouseX + offsetX;
+        int worldMouseY = mouseY + offsetY;
+        double angle = Math.atan2(worldMouseY - centerY, worldMouseX - centerX);
     
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+        // 通常攻撃の弾
+        projectiles.add(new Projectile(centerX, centerY, angle, "assets/attack.png"));
     
-            skillOnCooldown = false;
-            repaint();
-        }).start();
+        // 追加の2発（少し角度を変える）
+        double spreadAngle = Math.toRadians(10); // 10度の角度差
+        projectiles.add(new Projectile(centerX, centerY, angle + spreadAngle, "assets/attack.png"));
+        projectiles.add(new Projectile(centerX, centerY, angle - spreadAngle, "assets/attack.png"));
     }
+    
     
     public void useSpecial() {
         System.out.println("必殺技発動！");
