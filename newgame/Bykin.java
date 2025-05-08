@@ -14,13 +14,15 @@ public class Bykin {
     private long lastDamageTime = 0;
     private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
     private Image specialImage;
+    private BykinGame game; // `game` 変数を追加
 
-    public Bykin(int startX, int startY) {
+    public Bykin(int startX, int startY, BykinGame game) {
 
         this.x = startX;
         this.y = startY;
-        this.status = new Status(1, 10, 5, 3, 100); // 初期値を設定
-
+        this.game = game; // `game` をセット
+        this.status = new Status(1, 10, 5, 3, 100, game); // `Status` を適切に初期化
+    
         try {
             image = ImageIO.read(new File("assets/bykin.png"));
             skillImage = ImageIO.read(new File("assets/E.png"));
