@@ -1,3 +1,6 @@
+package newgame;
+import newgame.GameState; // GameState をインポート
+
 public class GameStateManager {
     private BykinGame game;
 

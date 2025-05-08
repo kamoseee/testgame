@@ -1,3 +1,5 @@
+package newgame; // パッケージを統一
+
 import javax.swing.*;
 
 public class GameLauncher {

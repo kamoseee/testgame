@@ -1,3 +1,4 @@
+package newgame;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -15,6 +16,7 @@ public class Bykin {
     private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
     private Image specialImage;
     private BykinGame game; // `game` 変数を追加
+    private SkillType selectedSkill = SkillType.AREA_ATTACK; // デフォルトは範囲攻撃
 
     public Bykin(int startX, int startY, BykinGame game) {
 
@@ -33,7 +35,13 @@ public class Bykin {
         }
 
     }
+    public SkillType getSelectedSkill() {
+        return selectedSkill;
+    }
 
+    public void setSelectedSkill(SkillType skill) {
+        this.selectedSkill = skill;
+    }
     // 画像の幅を取得
     public int getWidth() {
         return (image != null) ? image.getWidth() : 0;

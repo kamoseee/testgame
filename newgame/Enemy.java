@@ -1,3 +1,4 @@
+package newgame; // すべてのクラスに追加
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;

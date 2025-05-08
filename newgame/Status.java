@@ -1,3 +1,4 @@
+package newgame;
 public class Status {
     private int level;
     private int attack;

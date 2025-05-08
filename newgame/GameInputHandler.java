@@ -1,3 +1,6 @@
+package newgame;
+import newgame.GameState; // GameState をインポート
+
 import java.awt.event.KeyEvent;
 
 public class GameInputHandler {
@@ -8,6 +11,11 @@ public class GameInputHandler {
     }
 
     public void handleKeyPress(KeyEvent e) {
+        if (game.getGameState() == GameState.LEVEL_UP) {
+            handleSkillSelection(e.getKeyCode()); // スキル選択処理を追加
+            return;
+        }
+
         if (game.isShowStatus()) {
             if (e.getKeyCode() == KeyEvent.VK_TAB) {
                 game.setShowStatus(false);
@@ -28,10 +36,7 @@ public class GameInputHandler {
                 game.repaint();
             }
             case KeyEvent.VK_SPACE -> {
-                if (game.getGameState() == GameState.LEVEL_UP) {
-                    game.setGameState(GameState.GAME);
-                    game.repaint();
-                } else if (game.isGameOver()) {
+                if (game.isGameOver()) {
                     game.restartGame();
                     game.setGameState(GameState.START);
                 } else if (!game.isGameStarted()) {
@@ -45,5 +50,16 @@ public class GameInputHandler {
                 game.repaint();
             }
         }
+    }
+
+    private void handleSkillSelection(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.VK_1 -> game.getBykin().setSelectedSkill(SkillType.AREA_ATTACK);
+            case KeyEvent.VK_2 -> game.getBykin().setSelectedSkill(SkillType.PIERCING_SHOT);
+            case KeyEvent.VK_3 -> game.getBykin().setSelectedSkill(SkillType.RAPID_FIRE);
+        }
+
+        game.setGameState(GameState.GAME);
+        game.repaint();
     }
 }

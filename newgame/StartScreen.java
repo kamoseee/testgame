@@ -1,3 +1,4 @@
+package newgame;
 import java.awt.*;
 
 public class StartScreen {

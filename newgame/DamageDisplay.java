@@ -1,3 +1,4 @@
+package newgame;
 public class DamageDisplay {
     private int damage;
     private int x, y;

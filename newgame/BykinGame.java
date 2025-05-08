@@ -1,9 +1,13 @@
+package newgame;
 import javax.swing.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import newgame.SkillProjectile;
+import newgame.Projectile;
+import newgame.Enemy;
+import newgame.GameState; // GameState をインポート
 
 public class BykinGame extends JPanel implements KeyListener, MouseMotionListener, ActionListener {
     private Bykin bykin;
@@ -209,12 +213,68 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
 
     public void useSkill() {
         if (skillOnCooldown) return;
-        System.out.println("スキル発動！");
-        skillOnCooldown = true;
-        skillUsedTime = System.currentTimeMillis();
-        repaint(); // 画面を更新してクールタイム演出を反映
+
+    System.out.println("スキル発動！");
+    skillOnCooldown = true;
+    skillUsedTime = System.currentTimeMillis();
+
+    switch (bykin.getSelectedSkill()) {
+        case AREA_ATTACK -> useAreaAttack();
+        case PIERCING_SHOT -> usePiercingShot();
+        case RAPID_FIRE -> useRapidFire();
     }
 
+    repaint();
+    }
+    private void useAreaAttack() {
+        int skillRange = 150;
+        int centerX = bykin.getX();
+        int centerY = bykin.getY();
+    
+        for (Enemy enemy : enemies) {
+            int distance = (int) Math.sqrt(Math.pow(enemy.getX() - centerX, 2) + Math.pow(enemy.getY() - centerY, 2));
+            if (distance <= skillRange) {
+                int actualDamage = enemy.takeDamage(bykin.getStatus().getAttack() * 2);
+                damageDisplays.add(new DamageDisplay(actualDamage, enemy.getX(), enemy.getY()));
+    
+                if (enemy.getCurrentHp() <= 0) {
+                    bykin.getStatus().addExperience(enemy.getLevel() * 20);
+                    enemy.startDying();
+                }
+            }
+        }
+    }
+    private void usePiercingShot() {
+        int centerX = bykin.getX() + bykin.getWidth() / 2;
+        int centerY = bykin.getY() + bykin.getHeight() / 2;
+        double angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+    
+        projectiles.add(new SkillProjectile(centerX, centerY, angle, "assets/skill_attack.png"));
+    }
+    private void useRapidFire() {
+        new Thread(() -> {
+            long skillDuration = 5000;
+            long startTime = System.currentTimeMillis();
+    
+            while (System.currentTimeMillis() - startTime < skillDuration) {
+                int centerX = bykin.getX() + bykin.getWidth() / 2;
+                int centerY = bykin.getY() + bykin.getHeight() / 2;
+                double angle = Math.atan2(mouseY - centerY, mouseX - centerX);
+    
+                projectiles.add(new Projectile(centerX, centerY, angle, "assets/attack.png"));
+    
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+    
+            skillOnCooldown = false;
+            repaint();
+        }).start();
+    }
+    
     public void useSpecial() {
         System.out.println("必殺技発動！");
     }

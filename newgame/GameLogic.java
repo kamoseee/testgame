@@ -1,3 +1,6 @@
+package newgame;
+import newgame.GameState; // GameState をインポート
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
@@ -54,23 +57,29 @@ public class GameLogic {
             Enemy enemy = it.next();
             for (Iterator<Projectile> projIt = game.getProjectiles().iterator(); projIt.hasNext();) {
                 Projectile projectile = projIt.next();
-                if (projectile.getBounds().intersects(
-                        new Rectangle(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight()))) {
+    
+                BufferedImage projectileImg = projectile.getMaskImage(); // 攻撃のマスク画像
+                BufferedImage enemyImg = enemy.getMaskImage(); // 敵のマスク画像
+    
+                if (checkPixelCollision(projectileImg, projectile.getX(), projectile.getY(),
+                                        enemyImg, enemy.getX(), enemy.getY())) {
                     int actualDamage = enemy.takeDamage(game.getBykin().getStatus().getAttack());
                     game.getDamageDisplays().add(new DamageDisplay(actualDamage, enemy.getX(), enemy.getY()));
-
+    
                     if (enemy.getCurrentHp() <= 0) {
-                        game.getBykin().getStatus().addExperience(enemy.getLevel() * 20); // 経験値を加算
-                        enemy.startDying(); // フェードアウト開始
+                        game.getBykin().getStatus().addExperience(enemy.getLevel() * 20);
+                        enemy.startDying();
                     }
-
+    
                     projIt.remove();
                     break;
                 }
             }
         }
+    
         game.getEnemies().removeIf(enemy -> enemy.isDying() && enemy.updateDying());
     }
+    
 
     private void handleAutoAttack() {
         if (System.currentTimeMillis() - game.getLastAttackTime() >= 2000) {

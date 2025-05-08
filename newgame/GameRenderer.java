@@ -1,3 +1,4 @@
+package newgame;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.Iterator;
@@ -208,7 +209,15 @@ public class GameRenderer {
         g.setColor(Color.YELLOW);
         g.setFont(new Font("SansSerif", Font.BOLD, 48));
         g.drawString("レベルアップ！", game.getWidth() / 2 - 150, game.getHeight() / 2 - 100);
-    
+        
+        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
+        g.setColor(Color.WHITE);
+        g.drawString("スキルを選択してください:", game.getWidth() / 2 - 120, game.getHeight() / 2 - 50);
+        
+        g.drawString("1: 範囲攻撃", game.getWidth() / 2 - 100, game.getHeight() / 2);
+        g.drawString("2: 貫通弾", game.getWidth() / 2 - 100, game.getHeight() / 2 + 30);
+        g.drawString("3: 連続攻撃", game.getWidth() / 2 - 100, game.getHeight() / 2 + 60);
+        
         g.setFont(new Font("SansSerif", Font.PLAIN, 24));
         g.setColor(Color.WHITE);
         Status s = game.getBykin().getStatus();
