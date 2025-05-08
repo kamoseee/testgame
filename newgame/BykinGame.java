@@ -1,9 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseEvent;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -136,9 +133,31 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         Font originalFont = g.getFont();
         g.setFont(new Font("Arial", Font.BOLD, 32)); // フォントサイズを24に変更
 
-        for (DamageDisplay damage : damageDisplays) {
-            g.drawString("-" + damage.getDamage(), damage.getX() - offsetX, damage.getY() - offsetY - 10);
+        Graphics2D g2d = (Graphics2D) g; // Graphics2D にキャスト
+        originalFont = g2d.getFont();
+        g2d.setFont(new Font("Arial", Font.BOLD, 32)); // フォントを大きく
+
+        Iterator<DamageDisplay> iter = damageDisplays.iterator();
+        while (iter.hasNext()) {
+            DamageDisplay damage = iter.next();
+
+            if (damage.isExpired()) {
+                iter.remove(); // 表示時間を超えたら削除
+                continue;
+            }
+
+            int alpha = damage.getAlpha(); // 時間に応じた透明度
+            g2d.setColor(new Color(255, 0, 0, alpha)); // 赤色＋透明度
+
+            int drawX = damage.getX() - offsetX; // 敵の中心に合わせる
+            int drawY = damage.getY() - offsetY - 20; // 敵の上に表示
+            g2d.drawString("-" + damage.getDamage(), drawX, drawY);
+            //System.out.println("ダメージ表示座標: X=" + drawX + ", Y=" + drawY);
+
+
         }
+
+        g2d.setFont(originalFont); // フォントを戻す
         // 元のフォントに戻す
         g.setFont(originalFont);
 
@@ -296,8 +315,13 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         g.fillRect(barX, barY, barWidth, barHeight);
 
         // HPバー（緑）
-        g.setColor(Color.GREEN);
+        Color hpColor = Color.GREEN;
+        if (currentHp <= maxHp * 0.5) hpColor = Color.YELLOW;
+        if (currentHp <= maxHp * 0.25) hpColor = Color.RED;
+
+        g.setColor(hpColor);
         g.fillRect(barX, barY, filledWidth, barHeight);
+
 
         // 枠線
         g.setColor(Color.WHITE);
@@ -324,7 +348,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
                 // ピクセル単位の当たり判定
                 BufferedImage bykinImg = bykin.getMaskImage();
                 BufferedImage enemyImg = enemy.getMaskImage();
-
+                
                 if (isPixelCollision(bykinImg, bykin.getX(), bykin.getY(),
                         enemyImg, enemy.getX(), enemy.getY())) {
                     if (!bykin.isInvincible()) {
@@ -343,11 +367,14 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
                 for (Enemy enemy : enemies) {
                     if (projectile.getBounds().intersects(
                             new Rectangle(enemy.getX(), enemy.getY(), enemy.getWidth(), enemy.getHeight()))) {
-                        enemy.takeDamage(bykin.getStatus().getAttack());
-                        // ダメージ表示
-                        damageDisplays
-                                .add(new DamageDisplay(bykin.getStatus().getAttack(), enemy.getX(), enemy.getY()));
+                                int actualDamage = enemy.takeDamage(bykin.getStatus().getAttack());
+                                int damageX = enemy.getX() + enemy.getWidth() / 2; // 敵の中心
+                                int damageY = enemy.getY() - 10; // 敵の上
 
+                                damageDisplays.add(new DamageDisplay(actualDamage, damageX, damageY));
+
+                                
+                                
                         it.remove(); // イテレータを使って削除
                         break;
                     }
@@ -377,7 +404,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
 
         repaint();
     }
-
+    
     private void restartGame() {
         bykin = new Bykin(100, 200);
         enemies.clear();
@@ -388,7 +415,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         skillOnCooldown = false;
         dx = 0;
         dy = 0;
-        gameState = GameState.START; // ゲームオーバー後はスタート画面に戻す
+        gameState = GameState.GAME; // ゲームをすぐ再開
         repaint();
     }
 
@@ -437,8 +464,11 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
                 if (isGameOver) {
                     restartGame();
                     gameState = GameState.START; // ゲームオーバー後にスタート画面に戻す
+                    
                 } else if (!isGameStarted) {
                     gameState = GameState.GAME;
+                    isGameStarted = true;  // ←追加
+
                     repaint();
                 }
             }
@@ -447,15 +477,12 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
 
     @Override
     public void keyReleased(KeyEvent e) {
-        if (showStatus)
-            return;
-
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> dx = 0;
             case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0;
         }
     }
-
+    
     @Override
     public void keyTyped(KeyEvent e) {
     }

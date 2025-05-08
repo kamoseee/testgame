@@ -24,17 +24,19 @@ public class StatusPanel extends JPanel {
 
         // パネル背景
         g.setColor(Color.BLACK);
-        g.fillRoundRect(panelX, panelY, panelWidth, panelHeight, 15, 15);
+        g.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
 
         // ステータステキスト
         g.setColor(Color.WHITE);
-        g.setFont(new Font("MS Gothic", Font.PLAIN, 16));
+        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
-        Status s = bykin.getStatus();
-        g.drawString("レベル: " + s.getLevel(), panelX + 10, panelY + 30);
-        g.drawString("攻撃: " + s.getAttack(), panelX + 10, panelY + 50);
-        g.drawString("防御: " + s.getDefense(), panelX + 10, panelY + 70);
-        g.drawString("速度: " + s.getSpeed(), panelX + 10, panelY + 90);
-        g.drawString("HP: " + s.getCurrentHp() + "/" + s.getMaxHp(), panelX + 10, panelY + 110);
-    }
+        if (bykin != null) {
+            Status s = bykin.getStatus();
+            g.drawString("レベル: " + s.getLevel(), 10, 30);
+            g.drawString("攻撃: " + s.getAttack(), 10, 50);
+            g.drawString("防御: " + s.getDefense(), 10, 70);
+            g.drawString("速度: " + s.getSpeed(), 10, 90);
+            g.drawString("HP: " + s.getCurrentHp() + "/" + s.getMaxHp(), 10, 110);
+        }
+        }
 }

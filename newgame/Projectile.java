@@ -5,7 +5,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon; // ImageIconクラスをインポート
 
 class Projectile {
-    private int x, y;
+    private double x, y; // x, y を double に変更
     private int speed = 10; // 攻撃の速さ
     private double angle; // 攻撃方向（ラジアン）
     private BufferedImage image;
@@ -16,11 +16,17 @@ class Projectile {
         this.angle = angle;
 
         try {
-            // BufferedImageとして画像を読み込む
-            image = ImageIO.read(getClass().getResource(imagePath));
+            java.net.URL imageUrl = getClass().getResource(imagePath);
+            if (imageUrl != null) {
+                image = ImageIO.read(imageUrl);
+            } else {
+                System.err.println("画像が見つかりません: " + imagePath);
+            }
         } catch (IOException e) {
+            System.err.println("画像の読み込みに失敗しました: " + imagePath);
             e.printStackTrace();
         }
+        
     }
 
     public BufferedImage getImage() {
@@ -28,24 +34,34 @@ class Projectile {
     }
 
     public void move() {
-        // 角度に基づいて移動
-        x += (int) (speed * Math.cos(angle));
-        y += (int) (speed * Math.sin(angle));
-    }
+    x += speed * Math.cos(angle);
+    y += speed * Math.sin(angle);
+}
 
-    public void draw(Graphics g, int offsetX, int offsetY) {
-        g.drawImage(image, x - offsetX, y - offsetY, null);
+public void draw(Graphics g, int offsetX, int offsetY) {
+    if (image != null) {
+        g.drawImage(image, getX() - offsetX, getY() - offsetY, null);
+    } else {
+        g.setColor(Color.RED);
+        g.fillOval(getX() - offsetX, getY() - offsetY, 10, 10); // 赤い円を描画（エラー表示）
     }
+}
 
-    public Rectangle getBounds() {
-        return new Rectangle(x, y, image.getWidth(), image.getHeight());
+
+public Rectangle getBounds() {
+    if (image != null) {
+        return new Rectangle(getX(), getY(), image.getWidth(), image.getHeight());
+    } else {
+        return new Rectangle(getX(), getY(), 10, 10); // デフォルトサイズ
     }
+}
+
 
     public int getX() {
-        return x;
+        return (int) x; // 描画時に int に変換
     }
-
+    
     public int getY() {
-        return y;
+        return (int) y;
     }
 }

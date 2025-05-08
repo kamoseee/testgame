@@ -11,21 +11,16 @@ public class Enemy {
     private int x, y;
     private BufferedImage image; 
     // 敵のステータス
-        // 宣言だけ残す（初期化は
-        private int level;
-        private int attack;
-        private int defense;  
-        private int speed;
-        private int maxHp;
-        private int currentHp;  // ← これを追加！
-
-        private boolean dying = false; 
-        private Random rand = new Random(); 
-
-
-
+    // 宣言だけ残す（初期化は
+    private int level;
+    private int attack;
+    private int defense;  
+    private int speed;
+    private int maxHp;
+    private int currentHp;
+    private boolean dying = false; 
+    private Random rand = new Random(); 
     private float alpha = 1.0f; // 1.0 
-
     // 敵が最後に移動した時間
     private long lastMoveTime;
     // 移動間隔（ミリ秒）
@@ -46,6 +41,7 @@ public class Enemy {
             image = ImageIO.read(new File(imagePath));
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println("画像の読み込みに失敗しました: " + imagePath);
         }
     }
 
@@ -76,15 +72,20 @@ public class Enemy {
     public BufferedImage getImage() {
         return image;
     }
-    
 
     // 敵のHPを減らす処理
-    public void takeDamage(int damage) {
-        currentHp -= damage;
-        if (currentHp < 0) {
-            currentHp = 0;
+    // 攻撃力と防御力を考慮したバージョン
+    public int takeDamage(int attackerAttack) {
+        int reduced = Math.max(1, attackerAttack - this.defense); // 最低1ダメージ
+        this.currentHp -= reduced;
+        if (this.currentHp < 0) {
+            this.currentHp = 0;
         }
+        //System.out.println("敵に与えたダメージ: " + reduced); // デバッグ用
+        return reduced; // 実際に与えたダメージを返す
     }
+    
+    
 
         //ランダムに移動するメソッド（間隔を調整）
     public void move(int screenWidth, int screenHeight) {
@@ -149,6 +150,7 @@ public class Enemy {
         return false;
     }
     
+    
 
     // 位置を取得するゲッター
     public int getX() {
@@ -161,9 +163,11 @@ public class Enemy {
     public BufferedImage getMaskImage() {
         return (BufferedImage) image;
     }
+    
     public Rectangle getBounds() {
         return new Rectangle(x, y, image.getWidth(null), image.getHeight(null));
     }
+    
     public int getWidth() {
         return image.getWidth();
     }

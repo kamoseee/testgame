@@ -40,16 +40,20 @@ public class Status {
     }
 
     public void takeDamage(int damage) {
-        currentHp -= Math.max(0, damage - defense);
+        int actualDamage = Math.max(1, damage - defense); // 最低1ダメージ
+        currentHp -= actualDamage;
         if (currentHp < 0)
             currentHp = 0;
     }
+    
 
     public void heal(int amount) {
-        currentHp += amount;
+        currentHp += Math.max(0, amount); // 負の値を防ぐ
         if (currentHp > maxHp)
             currentHp = maxHp;
     }
+    
+    
 
     public void setCurrentHp(int hp) {
         currentHp = Math.max(0, Math.min(hp, maxHp)); // 0〜maxHpの範囲に収める

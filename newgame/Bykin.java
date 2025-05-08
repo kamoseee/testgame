@@ -1,6 +1,8 @@
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+
 import javax.imageio.ImageIO;
 
 public class Bykin {
@@ -23,25 +25,29 @@ public class Bykin {
             image = ImageIO.read(new File("assets/bykin.png"));
             skillImage = ImageIO.read(new File("assets/E.png"));
             specialImage = ImageIO.read(new File("assets/Q.png"));
-        } catch (Exception e) {
+        } catch (IOException e) {
+            System.err.println("画像の読み込みに失敗しました: " + e.getMessage());
             e.printStackTrace();
         }
+
     }
 
     // 画像の幅を取得
     public int getWidth() {
-        return image.getWidth(null); // 画像の幅を返す
+        return (image != null) ? image.getWidth() : 0;
     }
-
-    // 画像の高さを取得
+    
     public int getHeight() {
-        return image.getHeight(null); // 画像の高さを返す
+        return (image != null) ? image.getHeight() : 0;
     }
+    
 
     public void move(int dx, int dy) {
-        x += dx * status.getSpeed();
-        y += dy * status.getSpeed();
+        int moveDistance = Math.min(status.getSpeed(), 10); // 最大移動距離を制限
+        x += dx * moveDistance;
+        y += dy * moveDistance;
     }
+    
 
     public boolean isInvincible() {
         long now = System.currentTimeMillis();
@@ -57,10 +63,16 @@ public class Bykin {
     }
 
     public void takeDamage(int damage) {
+        if (isInvincible()) {
+            //System.out.println("無敵状態のためダメージなし！");
+            return;
+        }
+        
         int reduced = Math.max(1, damage - status.getDefense()); // 最低1ダメージ
         status.setCurrentHp(status.getCurrentHp() - reduced);
         System.out.println("ダメージを受けた！ 残HP: " + status.getCurrentHp());
     }
+    
 
     public void heal(int amount) {
         status.heal(amount);
@@ -69,9 +81,14 @@ public class Bykin {
     public void draw(Graphics g, int screenX, int screenY) {
         if (image != null) {
             g.drawImage(image, screenX, screenY, null);
+        } else {
+            g.setColor(Color.RED);
+            g.fillRect(screenX, screenY, 50, 50); // 赤い四角を描画（エラー表示）
+            g.setColor(Color.WHITE);
+            g.drawString("画像なし", screenX + 5, screenY + 25);
         }
-
     }
+    
 
     public Image getSkillImage() {
         return skillImage;
