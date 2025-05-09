@@ -3,7 +3,7 @@ public class Status {
     private int level;
     private int attack;
     private int defense;
-    private int speed;
+    private int speed = 5; // 初期速度を5に設定
     private int currentHp;
     private int maxHp;
     private int experience; // 経験値
@@ -71,7 +71,9 @@ public class Status {
         // ステータス上昇
         attack += 2;
         defense += 1;
-        speed += 1;
+        if (level % 5 == 0) { // レベルが5の倍数のときだけ速度を上昇
+            speed += 1;
+        }
         maxHp += 10;
         currentHp = maxHp; // レベルアップ時にHP全回復
     

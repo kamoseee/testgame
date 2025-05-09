@@ -23,7 +23,7 @@ public class AOEEffect {
     int drawX = centerX - offsetX;
     int drawY = centerY - offsetY;
 
-    System.out.println("エフェクト描画: " + drawX + ", " + drawY + ", 半径: " + radius); // デバッグ用
+    //System.out.println("エフェクト描画: " + drawX + ", " + drawY + ", 半径: " + radius); // デバッグ用
     g.setColor(new Color(255, 0, 0, 100)); // 半透明の赤色
     g.fillOval(drawX - radius, drawY - radius, radius * 2, radius * 2); // 中心座標を考慮
 }

@@ -53,9 +53,18 @@ public class Bykin {
 
     public void move(int dx, int dy) {
         int moveDistance = Math.min(status.getSpeed(), 10); // 最大移動距離を制限
-        x += dx * moveDistance;
-        y += dy * moveDistance;
+        double baseSpeed = 1.5; // レベル1の最低移動距離を設定
+    
+        x += dx * (Math.max(moveDistance * 0.05, baseSpeed)); // 移動距離の倍率を調整
+        y += dy * (Math.max(moveDistance * 0.05, baseSpeed)); // 移動距離の倍率を調整
+    
+        game.repaint(); // 画面を更新して移動を反映
     }
+    
+    
+    
+    
+    
     
 
     public boolean isInvincible() {

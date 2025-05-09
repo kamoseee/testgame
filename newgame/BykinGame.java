@@ -40,39 +40,53 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     
 
 
-    
     public BykinGame() {
         setFocusTraversalKeysEnabled(false);
+        
+        // **GameLogic を最初に初期化**
+        logic = new GameLogic(this); 
+    
         inputHandler = new GameInputHandler(this);
         bykin = new Bykin(100, 200, this);
         stage = new Stage(2000, 2000);
+        
         addMouseMotionListener(this);
-
+        setFocusable(true);
+        requestFocusInWindow(); // フォーカスを設定
+        addKeyListener(inputHandler);
+    
+        // 移動を定期的に更新するタイマー
+        Timer movementTimer = new Timer(32, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                inputHandler.updateMovement();
+                repaint();
+            }
+        });
+        movementTimer.start();
+    
         enemies = new ArrayList<>();
         enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
         enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
         enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
-
+    
         setPreferredSize(new Dimension(1280, 720));
         setBackground(Color.WHITE);
         setFocusable(true);
         addKeyListener(this);
-
+    
         timer = new Timer(16, this);
         timer.start();
-
+    
         gameState = GameState.START;
-
-        // 新しいクラスを初期化
+    
+        // **GameRenderer を初期化**
         renderer = new GameRenderer(this);
-        logic = new GameLogic(this);
-        inputHandler = new GameInputHandler(this);
-        }
+    }
+    
     public List<AOEEffect> getEffects() {
         return effects;
     }
-
-    
     public long getLastAttackTime() {
         return lastAttackTime;
     }
@@ -92,11 +106,11 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     public void setBykin(Bykin bykin) {
         this.bykin = bykin;
     }
-    public void update() {
+    public void updateGame() {
         if (logic != null) {
-            logic.updateGame();
+            logic.updateGame(); // `logic` が `null` でない場合のみ実行
         } else {
-            System.err.println("エラー: logic が null のため updateGame() を呼び出せません！");
+            System.err.println("エラー: GameLogic が初期化されていません！");
         }
     }
     private void drawStatsScreen(Graphics g) {
@@ -227,13 +241,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
                 break;
         }
     }
-    public void updateGame() {
-        if (logic != null) {
-            logic.updateGame(); // `logic` が `null` でない場合のみ実行
-        } else {
-            System.err.println("エラー: GameLogic が初期化されていません！");
-        }
-    }    
+      
     @Override
     public void actionPerformed(ActionEvent e) {
         logic.updateGame(); // ゲームロジックを `GameLogic` に委譲
