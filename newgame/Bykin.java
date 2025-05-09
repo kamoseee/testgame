@@ -16,10 +16,9 @@ public class Bykin {
     private static final int INVINCIBLE_TIME = 1000; // 1秒無敵
     private Image specialImage;
     private BykinGame game; // `game` 変数を追加
-    private SkillType selectedSkill = SkillType.AREA_ATTACK; // デフォルトは範囲攻撃
-
+    private SkillType selectedSkill = null; // 初期値を null に設定
     public Bykin(int startX, int startY, BykinGame game) {
-
+        
         this.x = startX;
         this.y = startY;
         this.game = game; // `game` をセット

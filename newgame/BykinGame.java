@@ -2,12 +2,16 @@ package newgame;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage; // BufferedImage をインポート
 import java.util.ArrayList;
 import java.util.List;
 import newgame.SkillProjectile;
 import newgame.Projectile;
 import newgame.Enemy;
 import newgame.GameState; // GameState をインポート
+import java.util.Iterator;
+import newgame.Bykin; // `Bykin` をインポート
+import newgame.SkillType; // `SkillType` をインポート
 
 public class BykinGame extends JPanel implements KeyListener, MouseMotionListener, ActionListener {
     private Bykin bykin;
@@ -28,11 +32,12 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     private int mouseX = 0;
     private int mouseY = 0;
     private List<DamageDisplay> damageDisplays = new ArrayList<>();
-    
+    private List<AOEEffect> effects = new ArrayList<>(); // 範囲攻撃のエフェクトリスト
     private GameRenderer renderer;
     private GameLogic logic;
     private GameInputHandler inputHandler;
     private GameState gameState = GameState.START; // ゲームの状態を管理
+    
 
 
     
@@ -62,7 +67,11 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         renderer = new GameRenderer(this);
         logic = new GameLogic(this);
         inputHandler = new GameInputHandler(this);
+        }
+    public List<AOEEffect> getEffects() {
+        return effects;
     }
+
     
     public long getLastAttackTime() {
         return lastAttackTime;
@@ -79,8 +88,16 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     public int getMouseY() {
         return mouseY;
     }
+
     public void setBykin(Bykin bykin) {
         this.bykin = bykin;
+    }
+    public void update() {
+        if (logic != null) {
+            logic.updateGame();
+        } else {
+            System.err.println("エラー: logic が null のため updateGame() を呼び出せません！");
+        }
     }
     private void drawStatsScreen(Graphics g) {
         g.setColor(new Color(0, 0, 0, 180));
@@ -115,31 +132,108 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         g.drawString("2: 貫通弾", getWidth() / 2 - 100, getHeight() / 2 + 30);
         g.drawString("3: 連続攻撃", getWidth() / 2 - 100, getHeight() / 2 + 60);
     }
+    public void useAOEAttack() {
+        int centerX = bykin.getX() + bykin.getWidth() / 2;
+        int centerY = bykin.getY() + bykin.getHeight() / 2;
+        int attackRadius = 200; // 範囲攻撃の半径
+    
+        System.out.println("範囲攻撃エフェクト追加: " + centerX + ", " + centerY + " 半径: " + attackRadius); // デバッグ用    
+        getEffects().add(new AOEEffect(centerX, centerY, attackRadius, 2000)); // 2秒間表示
+    
+        System.out.println("現在のエフェクト数: " + getEffects().size()); // デバッグ用
+    
+        int attackRadiusSquared = attackRadius * attackRadius; // 範囲の二乗を計算（高速化）
+    
+        for (Enemy enemy : getEnemies()) {
+            BufferedImage enemyImage = enemy.getImage(); // 敵の画像を取得
+            int enemyWidth = enemyImage.getWidth();
+            int enemyHeight = enemyImage.getHeight();
+            boolean damageApplied = false; // ダメージ適用済みかどうかのフラグ
+    
+            for (int x = 0; x < enemyWidth; x++) {
+                for (int y = 0; y < enemyHeight; y++) {
+                    int pixel = enemyImage.getRGB(x, y);
+    
+                    // 透明ピクセルは無視
+                    if ((pixel >> 24) == 0) {
+                        continue;
+                    }
+    
+                    int worldX = enemy.getX() + x;
+                    int worldY = enemy.getY() + y;
+    
+                    int distanceSquared = (worldX - centerX) * (worldX - centerX) +
+                                          (worldY - centerY) * (worldY - centerY);
+    
+                    if (distanceSquared <= attackRadiusSquared) { // 範囲内ならダメージ適用
+                        if (!damageApplied) { // まだダメージを適用していない場合のみ
+                            System.out.println("敵にダメージ適用: " + enemy.getX() + ", " + enemy.getY()); // デバッグ用
+                            int actualDamage = enemy.takeDamage(bykin.getStatus().getAttack() * 2);
+                            getDamageDisplays().add(new DamageDisplay(actualDamage, worldX, worldY)); // ダメージ表示
+    
+                            if (enemy.getCurrentHp() <= 0) {
+                                bykin.getStatus().addExperience(enemy.getLevel() * 20);
+                                enemy.startDying();
+                            }
+    
+                            damageApplied = true; // ダメージ適用済みにする
+                        }
+                        break; // 1つでも当たり判定があればダメージ適用
+                    }
+                }
+                if (damageApplied) break; // すでにダメージを適用したらループを抜ける
+            }
+        }
+    }
     
     
-
+    
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        switch (getGameState()) { // `game.getGameState()` → `getGameState()`
+        // プレイヤーのワールド座標から画面座標へのオフセットを計算
+        int offsetX = bykin.getX() - getCharX();
+        int offsetY = bykin.getY() - getCharY();
+
+        // エフェクトを描画
+        for (AOEEffect effect : effects) {
+            effect.draw(g, offsetX, offsetY); // 正しい引数を渡す
+        }
+
+
+        switch (getGameState()) {
             case START:
-                new StartScreen().draw(g, getWidth(), getHeight()); // `game.getWidth()` → `getWidth()`
+                new StartScreen().draw(g, getWidth(), getHeight());
                 break;
             case GAME:
                 renderer.render(g);
+                //System.out.println("エフェクト描画開始: " + getEffects().size()); // デバッグ用
+                for (Iterator<AOEEffect> it = getEffects().iterator(); it.hasNext();) {
+                    AOEEffect effect = it.next();
+                    effect.draw(g, offsetX, offsetY); // 修正: 正しい引数を渡す
+                        if (effect.isExpired()) {
+                        it.remove();
+                    }
+                }
                 break;
             case SHOW_STATS:
-                drawStatsScreen(g); // ステータス変化画面を表示
+                drawStatsScreen(g);
                 break;
             case LEVEL_UP:
-                drawLevelUpScreen(g); // スキル選択画面を表示
+                drawLevelUpScreen(g);
                 break;
             case GAME_OVER:
-                new GameOverScreen().draw(g, getWidth(), getHeight()); // `game.getWidth()` → `getWidth()`
+                new GameOverScreen().draw(g, getWidth(), getHeight());
                 break;
         }
     }
-
+    public void updateGame() {
+        if (logic != null) {
+            logic.updateGame(); // `logic` が `null` でない場合のみ実行
+        } else {
+            System.err.println("エラー: GameLogic が初期化されていません！");
+        }
+    }    
     @Override
     public void actionPerformed(ActionEvent e) {
         logic.updateGame(); // ゲームロジックを `GameLogic` に委譲
@@ -265,38 +359,32 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     }
 
     public void useSkill() {
-        if (skillOnCooldown) return;
-
-    System.out.println("スキル発動！");
-    skillOnCooldown = true;
-    skillUsedTime = System.currentTimeMillis();
-
-    switch (bykin.getSelectedSkill()) {
-        case AREA_ATTACK -> useAreaAttack();
-        case PIERCING_SHOT -> usePiercingShot();
-        case RAPID_FIRE -> useRapidFire();
-    }
-
-    repaint();
-    }
-    private void useAreaAttack() {
-        int skillRange = 150;
-        int centerX = bykin.getX();
-        int centerY = bykin.getY();
-    
-        for (Enemy enemy : enemies) {
-            int distance = (int) Math.sqrt(Math.pow(enemy.getX() - centerX, 2) + Math.pow(enemy.getY() - centerY, 2));
-            if (distance <= skillRange) {
-                int actualDamage = enemy.takeDamage(bykin.getStatus().getAttack() * 2);
-                damageDisplays.add(new DamageDisplay(actualDamage, enemy.getX(), enemy.getY()));
-    
-                if (enemy.getCurrentHp() <= 0) {
-                    bykin.getStatus().addExperience(enemy.getLevel() * 20);
-                    enemy.startDying();
-                }
-            }
+        if (skillOnCooldown) {
+            System.out.println("スキルはクールダウン中です！");
+            return;
         }
+    
+        SkillType selectedSkill = bykin.getSelectedSkill();
+        if (selectedSkill == null) {
+            System.out.println("スキルが選択されていません！ 発動不可");
+            return;
+        }
+    
+        System.out.println("スキル発動！ 選択されたスキル: " + selectedSkill);
+        skillOnCooldown = true;
+        skillUsedTime = System.currentTimeMillis();
+    
+        switch (selectedSkill) {
+            case AREA_ATTACK -> useAOEAttack();
+            case PIERCING_SHOT -> usePiercingShot();
+            case RAPID_FIRE -> useRapidFire();
+        }
+    
+        repaint();
     }
+    
+    
+        
     private void usePiercingShot() {
         int centerX = bykin.getX() + bykin.getWidth() / 2;
         int centerY = bykin.getY() + bykin.getHeight() / 2;
