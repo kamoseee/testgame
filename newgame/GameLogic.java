@@ -82,7 +82,7 @@ public class GameLogic {
             }
         }
     
-        game.getEnemies().removeIf(enemy -> enemy.isDying() && enemy.updateDying());
+        game.getEnemies().removeIf(Enemy::updateDying);
     }
     
     
@@ -113,13 +113,19 @@ public class GameLogic {
 
         for (int y = top; y < bottom; y++) {
             for (int x = left; x < right; x++) {
-                int pixel1 = img1.getRGB(x - x1, y - y1);
-                int pixel2 = img2.getRGB(x - x2, y - y2);
-                if (((pixel1 >> 24) & 0xFF) > 0 && ((pixel2 >> 24) & 0xFF) > 0) {
-                    return true;
+                if (x - x1 < img1.getWidth() && y - y1 < img1.getHeight() &&
+                    x - x2 < img2.getWidth() && y - y2 < img2.getHeight()) {
+
+                    int pixel1 = img1.getRGB(x - x1, y - y1);
+                    int pixel2 = img2.getRGB(x - x2, y - y2);
+
+                    if (((pixel1 >> 24) & 0xFF) > 0 && ((pixel2 >> 24) & 0xFF) > 0) {
+                        return true;
+                    }
                 }
             }
         }
+
         return false;
     }
 }

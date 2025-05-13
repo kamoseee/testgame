@@ -16,7 +16,6 @@ public class GameRenderer {
 
         int offsetX = game.getBykin().getX() - game.getCharX();
         int offsetY = game.getBykin().getY() - game.getCharY();
-
         switch (game.getGameState()) {
             case START:
                 new StartScreen().draw(g2d, game.getWidth(), game.getHeight());
@@ -61,22 +60,16 @@ public class GameRenderer {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setFont(new Font("Arial", Font.BOLD, 32));
 
-        Iterator<DamageDisplay> iter = game.getDamageDisplays().iterator();
-        while (iter.hasNext()) {
-            DamageDisplay damage = iter.next();
+        game.getDamageDisplays().removeIf(DamageDisplay::isExpired);
 
-            if (damage.isExpired()) {
-                iter.remove();
-                continue;
-            }
+for (DamageDisplay damage : game.getDamageDisplays()) {
+    int alpha = damage.getAlpha();
+    g2d.setColor(new Color(255, 0, 0, alpha));
 
-            int alpha = damage.getAlpha();
-            g2d.setColor(new Color(255, 0, 0, alpha));
-
-            int drawX = damage.getX() - offsetX;
-            int drawY = damage.getY() - offsetY;
-            g2d.drawString("-" + damage.getDamage(), drawX, drawY);
-        }
+    int drawX = damage.getX() - offsetX;
+    int drawY = damage.getY() - offsetY;
+    g2d.drawString("-" + damage.getDamage(), drawX, drawY);
+}
     }
 
     private void drawHealthBar(Graphics g, int x, int y) {
@@ -89,7 +82,7 @@ public class GameRenderer {
 
         int currentHp = game.getBykin().getStatus().getCurrentHp();
         int maxHp = game.getBykin().getStatus().getMaxHp();
-        int barWidth = (int) (200 * ((double) currentHp / maxHp));
+        int barWidth = Math.max(1, (int) (200 * ((double) currentHp / maxHp))); // 最低 1px は描画する
         g.setColor(Color.GREEN);
         g.fillRect(x + 50, y, barWidth, 20);
 
@@ -171,17 +164,19 @@ public class GameRenderer {
             g2.setClip(null);
     
             if (game.isSkillOnCooldown()) {
-                long elapsed = System.currentTimeMillis() - game.getSkillUsedTime();
-                if (elapsed >= game.getCooldownMax()) {
-                    game.setSkillOnCooldown(false);
-                } else {
-                    double cooldownRatio = (double) elapsed / game.getCooldownMax();
-                    int angle = (int) (360 * (1 - cooldownRatio));
-    
-                    g2.setColor(new Color(0, 0, 0, 150));
-                    g2.fillArc(skillX, skillY, iconSize, iconSize, 90, angle);
-                }
-            }
+    long elapsed = System.currentTimeMillis() - game.getSkillUsedTime();
+    if (elapsed >= game.getCooldownMax()) {
+        game.setSkillOnCooldown(false);
+    } else {
+        double cooldownRatio = (double) elapsed / game.getCooldownMax();
+        int angle = (int) (360 * (1 - cooldownRatio));
+
+        g2.setColor(new Color(0, 0, 0, 150));
+        g2.fillArc(skillX, skillY, iconSize, iconSize, 90, angle);
+    }
+}
+
+
         }
 
         if (specialImage != null) {

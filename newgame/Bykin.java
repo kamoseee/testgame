@@ -53,20 +53,20 @@ public class Bykin {
 
     public void move(int dx, int dy) {
         int moveDistance = Math.min(status.getSpeed(), 10); // 最大移動距離を制限
-        double baseSpeed = 1.5; // レベル1の最低移動距離を設定
-    
-        x += dx * (Math.max(moveDistance * 0.05, baseSpeed)); // 移動距離の倍率を調整
-        y += dy * (Math.max(moveDistance * 0.05, baseSpeed)); // 移動距離の倍率を調整
-    
-        game.repaint(); // 画面を更新して移動を反映
+        double baseSpeed = 3; // レベル1の最低移動距離
+
+        double magnitude = Math.sqrt(dx * dx + dy * dy);
+        if (magnitude > 0) { // 斜め移動時の速度補正
+            dx = (int) ((dx / magnitude) * Math.max(moveDistance * 0.05, baseSpeed));
+            dy = (int) ((dy / magnitude) * Math.max(moveDistance * 0.05, baseSpeed));
+        }
+
+        x += dx;
+        y += dy;
+
+        game.repaint();
     }
     
-    
-    
-    
-    
-    
-
     public boolean isInvincible() {
         long now = System.currentTimeMillis();
         if (invincible && now - lastDamageTime >= INVINCIBLE_TIME) {
@@ -87,7 +87,7 @@ public class Bykin {
         }
         
         int reduced = Math.max(1, damage - status.getDefense()); // 最低1ダメージ
-        status.setCurrentHp(status.getCurrentHp() - reduced);
+        status.setCurrentHp(Math.max(0, status.getCurrentHp() - reduced)); // HPを負の値にしない
         System.out.println("ダメージを受けた！ 残HP: " + status.getCurrentHp());
     }
     

@@ -7,13 +7,20 @@ public class GameStateManager {
     public GameStateManager(BykinGame game) {
         this.game = game;
     }
-
+    private static final Enemy[] INITIAL_ENEMIES = {
+        new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30),
+        new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40),
+        new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60),
+        new Enemy(500, 900, "assets/virus01.png", 1, 5, 1, 3, 30),
+        new Enemy(200, 500, "assets/virus02.png", 2, 7, 2, 3, 40),
+        new Enemy(1000, 1000, "assets/virus03.png", 3, 10, 3, 3, 60)
+    };
     public void restartGame() {
         game.setBykin(new Bykin(100, 200, game));
         game.getEnemies().clear();
-        game.getEnemies().add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
-        game.getEnemies().add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
-        game.getEnemies().add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
+        for (Enemy enemy : INITIAL_ENEMIES) {
+            game.getEnemies().add(enemy);
+        }
         game.setGameOver(false);
         game.setSkillOnCooldown(false);
         game.setDx(0);

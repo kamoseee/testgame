@@ -15,20 +15,31 @@ public class SkillProjectile extends Projectile {
     }
    
     @Override
-    public void move() {
-        x += speed * Math.cos(angle);
-        y += speed * Math.sin(angle);
-    }
+public void move() {
+    double dx = Math.cos(angle);
+    double dy = Math.sin(angle);
+    
+    double magnitude = Math.sqrt(dx * dx + dy * dy);
+    x += (dx / magnitude) * speed;
+    y += (dy / magnitude) * speed;
+}
+
 
     @Override
     public boolean canPassThroughEnemies() {
         return true; // 貫通する
     }
     public boolean hasHit(Enemy enemy) {
-        return hitEnemies.contains(enemy);
+        return enemy != null && hitEnemies.contains(enemy);
     }
 
     public void registerHit(Enemy enemy) {
+        if (enemy != null && !hitEnemies.contains(enemy)) {
         hitEnemies.add(enemy);
     }
+    }
+    public void resetHits() {
+        hitEnemies.clear();
+    }
+
 }

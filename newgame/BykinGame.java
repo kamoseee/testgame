@@ -37,7 +37,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     private GameLogic logic;
     private GameInputHandler inputHandler;
     private GameState gameState = GameState.START; // ゲームの状態を管理
-    
+        private boolean isPaused = false; // 🔥 一時停止フラグを追加
 
 
     public BykinGame() {
@@ -69,7 +69,9 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         enemies.add(new Enemy(500, 300, "assets/virus01.png", 1, 5, 1, 3, 30));
         enemies.add(new Enemy(700, 400, "assets/virus02.png", 2, 7, 2, 3, 40));
         enemies.add(new Enemy(900, 500, "assets/virus03.png", 3, 10, 3, 3, 60));
-    
+        enemies.add(new Enemy(500, 900, "assets/virus01.png", 1, 5, 1, 3, 30));
+        enemies.add(new Enemy(200, 500, "assets/virus02.png", 2, 7, 2, 3, 40));
+        enemies.add(new Enemy(1000,1000, "assets/virus03.png", 3, 10, 3, 3, 60));
         setPreferredSize(new Dimension(1280, 720));
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -102,11 +104,25 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     public int getMouseY() {
         return mouseY;
     }
+    public boolean isPaused() {
+        return isPaused;
+    }
 
     public void setBykin(Bykin bykin) {
         this.bykin = bykin;
     }
+    public void togglePause() {
+    isPaused = !isPaused;
+
+    if (isPaused) { // 一時停止時にキャラの移動をリセット
+            dx = 0;
+            dy = 0;
+        }
+
+        System.out.println("ゲームの状態: " + (isPaused ? "一時停止" : "再開"));
+    }
     public void updateGame() {
+        
         if (logic != null) {
             logic.updateGame(); // `logic` が `null` でない場合のみ実行
         } else {
@@ -151,10 +167,10 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         int centerY = bykin.getY() + bykin.getHeight() / 2;
         int attackRadius = 200; // 範囲攻撃の半径
     
-        System.out.println("範囲攻撃エフェクト追加: " + centerX + ", " + centerY + " 半径: " + attackRadius); // デバッグ用    
+        //System.out.println("範囲攻撃エフェクト追加: " + centerX + ", " + centerY + " 半径: " + attackRadius); // デバッグ用    
         getEffects().add(new AOEEffect(centerX, centerY, attackRadius, 2000)); // 2秒間表示
     
-        System.out.println("現在のエフェクト数: " + getEffects().size()); // デバッグ用
+        //System.out.println("現在のエフェクト数: " + getEffects().size()); // デバッグ用
     
         int attackRadiusSquared = attackRadius * attackRadius; // 範囲の二乗を計算（高速化）
     
@@ -181,7 +197,7 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
     
                     if (distanceSquared <= attackRadiusSquared) { // 範囲内ならダメージ適用
                         if (!damageApplied) { // まだダメージを適用していない場合のみ
-                            System.out.println("敵にダメージ適用: " + enemy.getX() + ", " + enemy.getY()); // デバッグ用
+                            //System.out.println("敵にダメージ適用: " + enemy.getX() + ", " + enemy.getY()); // デバッグ用
                             int actualDamage = enemy.takeDamage(bykin.getStatus().getAttack() * 2);
                             getDamageDisplays().add(new DamageDisplay(actualDamage, worldX, worldY)); // ダメージ表示
     
@@ -250,15 +266,19 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
 
     @Override
     public void keyPressed(KeyEvent e) {
-        inputHandler.handleKeyPress(e); // 入力処理を `GameInputHandler` に委譲
-    }
+        if (!isPaused) { // ゲームが一時停止中なら処理を無効化
+                inputHandler.handleKeyPress(e);
+            }    
+        }
 
     @Override
     public void keyReleased(KeyEvent e) {
+        if (!isPaused) { // 一時停止中なら何もしない
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> dx = 0;
             case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0;
         }
+    }
     }
 
     @Override
@@ -397,16 +417,16 @@ public class BykinGame extends JPanel implements KeyListener, MouseMotionListene
         int centerX = bykin.getX() + bykin.getWidth() / 2;
         int centerY = bykin.getY() + bykin.getHeight() / 2;
         // ワールド座標系でのマウス位置を取得
-    int offsetX = bykin.getX() - charX;
-    int offsetY = bykin.getY() - charY;
-    int worldMouseX = mouseX + offsetX;
-    int worldMouseY = mouseY + offsetY;
-        // 発射角度を計算
-    double angle = Math.atan2(worldMouseY - centerY, worldMouseX - centerX);
+        int offsetX = bykin.getX() - charX;
+        int offsetY = bykin.getY() - charY;
+        int worldMouseX = mouseX + offsetX;
+        int worldMouseY = mouseY + offsetY;
+            // 発射角度を計算
+        double angle = Math.atan2(worldMouseY - centerY, worldMouseX - centerX);
 
-    // 貫通弾を発射
-    projectiles.add(new SkillProjectile(centerX, centerY, angle, "assets/skill_attack.png"));
-}
+        // 貫通弾を発射
+        projectiles.add(new SkillProjectile(centerX, centerY, angle, "assets/skill_attack.png"));
+    }
     private void useRapidFire() {
         int centerX = bykin.getX() + bykin.getWidth() / 2;
         int centerY = bykin.getY() + bykin.getHeight() / 2;

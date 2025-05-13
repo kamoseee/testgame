@@ -39,11 +39,16 @@ public class Enemy {
         this.lastMoveTime = System.currentTimeMillis();
 
         try {
-            image = ImageIO.read(new File(imagePath));
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("画像の読み込みに失敗しました: " + imagePath);
-        }
+        image = ImageIO.read(new File(imagePath));
+    } catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("画像の読み込みに失敗しました: " + imagePath);
+        image = new BufferedImage(50, 50, BufferedImage.TYPE_INT_ARGB); // 代替画像 (透明な画像)
+        Graphics2D g2d = image.createGraphics();
+        g2d.setColor(Color.RED);
+        g2d.fillRect(0, 0, 50, 50); // 赤い四角を描画
+        g2d.dispose();
+    }
     }
 
     // 敵のステータスに関連するゲッター
@@ -90,35 +95,31 @@ public class Enemy {
 
         //ランダムに移動するメソッド（間隔を調整）
     public void move(int screenWidth, int screenHeight) {
-        long currentTime = System.currentTimeMillis();
-        
-        // 移動間隔が経過した場合のみ移動
-        if (currentTime - lastMoveTime >= MOVE_INTERVAL) {
-            int direction = rand.nextInt(4); // 0: 左, 1: 右, 2: 上, 3: 下
-            int moveDistance = speed; // 移動距離は速度に基づく
+    long currentTime = System.currentTimeMillis();
+    
+    // 移動間隔が経過した場合のみ移動
+    if (currentTime - lastMoveTime >= MOVE_INTERVAL) {
+        int direction = rand.nextInt(4); // 0: 左, 1: 右, 2: 上, 3: 下
+        int moveDistance = speed; // 移動距離は速度に基づく
 
-            switch (direction) {
-                case 0: // 左
-                        
-                    if (x - moveDistance >= 0) x -= moveDistance;
-                    break;
-                case 1: // 右
-                        
-                    if (x + moveDistance < screenWidth) x += moveDistance;
-                    break;
-                case 2: // 上
-                        
-                    if (y - moveDistance >= 0) y -= moveDistance;
-                    break;
-                case 3: // 下
-                    if (y + moveDistance < screenHeight) y += moveDistance;
-                    break;
-            }
+        int newX = x, newY = y; // 仮の移動値を作成
 
-            // 最後に移動した時刻を更新
-            lastMoveTime = currentTime;
+        switch (direction) {
+            case 0: newX -= moveDistance; break; // 左
+            case 1: newX += moveDistance; break; // 右
+            case 2: newY -= moveDistance; break; // 上
+            case 3: newY += moveDistance; break; // 下
         }
+
+        // 画面端を超えないように制限
+        if (newX >= 0 && newX < screenWidth) x = newX;
+        if (newY >= 0 && newY < screenHeight) y = newY;
+
+        // 最後に移動した時刻を更新
+        lastMoveTime = currentTime;
     }
+}
+
 
     public void draw(Graphics g, int offsetX, int offsetY) {
         Graphics2D g2d = (Graphics2D) g;
@@ -143,7 +144,7 @@ public class Enemy {
     
     public boolean updateDying() {
         if (dying) {
-            alpha -= 0.05f; // 徐々に透明に
+            alpha -= 0.02f; // 徐々に透明に
             if (alpha <= 0) {
                 return true; // 消滅完了のサイン
             }
